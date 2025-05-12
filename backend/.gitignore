@@ -1,2 +1,3 @@
-./test.sh
-./deploy.sh
+test.sh
+deploy.sh
+app

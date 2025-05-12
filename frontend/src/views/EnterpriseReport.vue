@@ -2,7 +2,7 @@
 import {request} from '@/axios';
 import type {Report} from '@/tables';
 import {formatDate} from '@/utils';
-import {useUrlSearchParams} from '@vueuse/core';
+import {useRouteQuery} from '@vueuse/router';
 import type {EChartsOption} from 'echarts';
 import {LineChart} from 'echarts/charts';
 import {GridComponent, TitleComponent, TooltipComponent} from 'echarts/components';
@@ -12,9 +12,6 @@ import {computed, reactive, ref, watch} from 'vue';
 import VChart from 'vue-echarts'
 import {useRoute} from 'vue-router';
 
-const route = useRoute()
-const params = useUrlSearchParams('history')
-
 use([
   TitleComponent,
   TooltipComponent,
@@ -23,29 +20,29 @@ use([
   CanvasRenderer,
 ])
 
-const page = computed({
-  get: () => parseInt(params.page as string)||1,
-  set: (page: number) => params.page = page.toString(),
-})
+const route = useRoute()
 
-const pageSize = computed({
-  get: () => parseInt(params.page_size as string)||10,
-  set: (pageSize: number) => params.page_size = pageSize.toString(),
-})
-
+const page = useRouteQuery('page', 1, {transform: Number})
+const pageSize = useRouteQuery('page_size', 10, {transform: Number})
+const state = useRouteQuery<any, boolean>('state', false, {transform: Boolean})
 const total = ref(0)
 const reports = ref<Report[]>([])
-watch(([page, pageSize]), async ([page, pageSize]) => {
+watch(([page, pageSize, state]), loadTable, {immediate: true})
+
+async function loadTable() {
   try {
-    request.get<any, {
+    const res = await request.get<any, {
       total: number,
       data: Report[],
-    }>(`/reports?page=${page}&page_size=${pageSize}`).then(res => {
-      total.value = res.total
-      reports.value = res.data
-    }).catch(() => {})
+    }>('/reports', {params: {
+      page: page.value,
+      page_size: pageSize.value,
+      state: state.value,
+    }})
+    total.value = res.total
+    reports.value = res.data
   } catch {}
-}, {immediate: true})
+}
 
 const trend = ref<number[]>([])
 request.get<any, number[]>('/trend').then(res => {
@@ -162,9 +159,12 @@ watch(() => route.params.id as string, async id => {
           <el-tag type="success">已处理：{{stats?.solved}}</el-tag>
           <el-tag type="warning">待处理：{{stats?.pending}}</el-tag>
         </div>
-        <el-button type="primary" @click="isDialogOpen=true">
-          上传年报
-        </el-button>
+        <div>
+          <el-switch v-model="state" active-text="仅未处理" inactive-text="全部年报" />
+          <el-button class="ms-2" type="primary" @click="isDialogOpen=true">
+            上传年报
+          </el-button>
+        </div>
       </template>
 
       <el-table :data="reports" highlight-current-row

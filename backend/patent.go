@@ -46,17 +46,17 @@ func RegisterPatentHandler(r *gin.Engine, bc *preloader.BaseConfig) {
 
 			var total int64
 			if err := query.Count(&total).Error; err != nil {
-				c.JSON(500, bc.RespFunc("统计总数失败", err, nil))
+				c.JSON(500, bc.Resp("统计总数失败", err, nil))
 				return
 			}
 
 			var solved int64
 			if err := query.Where("status = true").Count(&solved).Error; err != nil {
-				c.JSON(500, bc.RespFunc("统计已处理数量失败", err, nil))
+				c.JSON(500, bc.Resp("统计已处理数量失败", err, nil))
 				return
 			}
 
-			c.JSON(200, bc.RespFunc("统计成功", nil, gin.H{
+			c.JSON(200, bc.Resp("统计成功", nil, gin.H{
 				"total":   total,
 				"solved":  solved,
 				"pending": total - solved,

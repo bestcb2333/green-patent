@@ -29,7 +29,7 @@ func GetRouter(db *gorm.DB, config *Config) *gin.Engine {
 		JWTExpHours:   time.Hour * 24,
 		UserTableName: "users",
 		AdminColName:  "admin",
-		RespFunc: func(message string, err error, data any) gin.H {
+		Resp: func(message string, err error, data any) gin.H {
 			var errStr *string
 			if err != nil {
 				str := err.Error()
