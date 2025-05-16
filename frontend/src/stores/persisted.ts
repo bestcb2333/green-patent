@@ -4,7 +4,9 @@ import {reactive, ref} from 'vue'
 const usePersistedStore = defineStore('persisted', () => {
 
   const setting = reactive({
-    apiAddr: 'http://axogc.net:8702',
+    apiAddr: 'https://axogc.net:7899/patent',
+    patentAddr: 'https://axogc.net:7899/file/patent/',
+    reportAddr: 'https://axogc.net:7899/file/report/',
     darkMode: false,
     themeColor: '#28abce',
     fontSize: 14,

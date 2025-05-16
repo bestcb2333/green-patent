@@ -17,6 +17,7 @@
     "@vueuse/core": "^13.1.0",
     "@vueuse/router": "^13.1.0",
     "axios": "^1.9.0",
+    "crypto-js": "^4.2.0",
     "dayjs": "^1.11.13",
     "echarts": "^5.6.0",
     "element-plus": "^2.9.9",
@@ -24,10 +25,12 @@
     "pinia-plugin-persistedstate": "^4.3.0",
     "vue": "^3.5.13",
     "vue-echarts": "^7.0.3",
-    "vue-router": "^4.5.1"
+    "vue-router": "^4.5.1",
+    "vue3-pdfjs": "^0.1.6"
   },
   "devDependencies": {
     "@tsconfig/node22": "^22.0.1",
+    "@types/crypto-js": "^4.2.2",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-vue": "^5.2.3",
     "@vue/eslint-config-prettier": "^10.2.0",

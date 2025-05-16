@@ -1,4 +1,4 @@
-import {ChatLineSquare, DataLine, Document, Opportunity, UserFilled} from '@element-plus/icons-vue'
+import {ChatLineSquare, DataLine, Document, Opportunity, Setting, UserFilled} from '@element-plus/icons-vue'
 import { createRouter, createWebHistory } from 'vue-router'
 
 const router = createRouter({
@@ -52,6 +52,16 @@ const router = createRouter({
         path: '/keywords',
         icon: ChatLineSquare,
         name: '关键词管理',
+      },
+    },
+    {
+      path: '/setting',
+      name: 'setting',
+      component: () => import('@/views/AppSetting.vue'),
+      meta: {
+        path: '/setting',
+        icon: Setting,
+        name: '系统设置',
       },
     },
   ],

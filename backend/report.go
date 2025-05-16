@@ -2,15 +2,17 @@ package main
 
 import (
 	"github.com/bestcb2333/gin-gorm-preloader/preloader"
+	p "github.com/bestcb2333/gin-gorm-preloader/preloader"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
 type ListReportReq struct {
 	preloader.PageConfig
+	Status bool `form:"status"`
 }
 
-func RegisterReportHandler(r *gin.Engine, bc *preloader.BaseConfig) {
+func RegisterReportHandler(r *gin.Engine, bc *preloader.BaseConfig, config *Config) {
 
 	r.GET("/reports", preloader.CreateListHandler[Report](
 		&preloader.Config[ListReportReq]{
@@ -23,6 +25,9 @@ func RegisterReportHandler(r *gin.Engine, bc *preloader.BaseConfig) {
 			).Preload(
 				"Keywords", Select("id", "value"),
 			)
+			if r.Status {
+				q = q.Where("status = ?", false)
+			}
 			return q
 		},
 	))
@@ -83,6 +88,43 @@ func RegisterReportHandler(r *gin.Engine, bc *preloader.BaseConfig) {
 				"solved":  solved,
 				"pending": total - solved,
 			}))
+		},
+	))
+
+	r.POST("/reports", p.Preload(
+		&p.Config[ReportDTO]{
+			Base: bc,
+			Bind: &p.BindConfig{Multipart: true},
+		},
+		func(c *gin.Context, u *User, r *ReportDTO) {
+
+			file, err := c.FormFile("file")
+			if err != nil {
+				c.JSON(500, bc.Resp("读取文件失败", err, nil))
+				return
+			}
+
+			if err := bc.DB.Where("file = ?", file.Filename).First(new(Report)).Error; err == nil {
+				c.JSON(400, bc.Resp("已存在同名文件", err, nil))
+				return
+			}
+
+			if err := c.SaveUploadedFile(file, config.Path.Report+file.Filename); err != nil {
+				c.JSON(500, bc.Resp("文件保存失败", err, nil))
+				return
+			}
+
+			data := new(Report)
+			data.ReportDTO = r
+			data.File = file.Filename
+			data.UserID = 1
+			data.Name = r.Name
+			if err := bc.DB.Create(data).Error; err != nil {
+				c.JSON(500, bc.Resp("数据库记录创建失败", err, nil))
+				return
+			}
+
+			c.JSON(200, bc.Resp("上传成功", nil, nil))
 		},
 	))
 }

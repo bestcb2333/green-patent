@@ -1,19 +1,20 @@
 package main
 
 import (
-	"github.com/bestcb2333/gin-gorm-preloader/preloader"
+	p "github.com/bestcb2333/gin-gorm-preloader/preloader"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
 type ListPatentReq struct {
-	preloader.PageConfig
+	p.PageConfig
+	Status bool `form:"status"`
 }
 
-func RegisterPatentHandler(r *gin.Engine, bc *preloader.BaseConfig) {
+func RegisterPatentHandler(r *gin.Engine, bc *p.BaseConfig, config *Config) {
 
-	r.GET("/patents", preloader.CreateListHandler[Patent](
-		&preloader.Config[ListPatentReq]{
+	r.GET("/patents", p.CreateListHandler[Patent](
+		&p.Config[ListPatentReq]{
 			Base:   bc,
 			DefReq: ListPatentReq{},
 		},
@@ -23,12 +24,15 @@ func RegisterPatentHandler(r *gin.Engine, bc *preloader.BaseConfig) {
 			).Preload(
 				"Keywords", Select("id", "value"),
 			)
+			if r.Status {
+				q = q.Where("status = ?", false)
+			}
 			return q
 		},
 	))
 
-	r.GET("/patents/:id", preloader.CreateGetHandler[Patent](
-		&preloader.Config[struct{}]{
+	r.GET("/patents/:id", p.CreateGetHandler[Patent](
+		&p.Config[struct{}]{
 			Base: bc,
 		},
 		func(q *gorm.DB, c *gin.Context, u *User) *gorm.DB {
@@ -36,8 +40,8 @@ func RegisterPatentHandler(r *gin.Engine, bc *preloader.BaseConfig) {
 		},
 	))
 
-	r.GET("/stats/patents", preloader.Preload(
-		&preloader.Config[struct{}]{
+	r.GET("/stats/patents", p.Preload(
+		&p.Config[struct{}]{
 			Base: bc,
 		},
 		func(c *gin.Context, u *User, r *struct{}) {
@@ -61,6 +65,42 @@ func RegisterPatentHandler(r *gin.Engine, bc *preloader.BaseConfig) {
 				"solved":  solved,
 				"pending": total - solved,
 			}))
+		},
+	))
+
+	r.POST("/patents", p.Preload(
+		&p.Config[PatentDTO]{
+			Base: bc,
+			Bind: &p.BindConfig{Multipart: true},
+		},
+		func(c *gin.Context, u *User, r *PatentDTO) {
+
+			file, err := c.FormFile("file")
+			if err != nil {
+				c.JSON(500, bc.Resp("读取文件失败", err, nil))
+				return
+			}
+
+			if err := bc.DB.Where("file = ?", file.Filename).First(new(Patent)).Error; err == nil {
+				c.JSON(400, bc.Resp("已存在同名文件", err, nil))
+				return
+			}
+
+			if err := c.SaveUploadedFile(file, config.Path.Patent+file.Filename); err != nil {
+				c.JSON(500, bc.Resp("文件保存失败", err, nil))
+				return
+			}
+
+			data := new(Patent)
+			data.PatentDTO = r
+			data.File = file.Filename
+			data.UserID = 1
+			if err := bc.DB.Create(data).Error; err != nil {
+				c.JSON(500, bc.Resp("数据库记录创建失败", err, nil))
+				return
+			}
+
+			c.JSON(200, bc.Resp("上传成功", nil, nil))
 		},
 	))
 }

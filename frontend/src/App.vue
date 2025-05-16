@@ -4,6 +4,7 @@ import {reactive, ref} from 'vue';
 import useSessionStore from './stores/session';
 import {request} from './axios';
 import usePersistedStore from './stores/persisted';
+import CryptoJS from 'crypto-js';
 
 const persisted = usePersistedStore()
 const session = useSessionStore()
@@ -19,7 +20,10 @@ const loginForm = reactive({
 
 async function login() {
   try {
-    persisted.token = await request.post<any, string>('/login', loginForm)
+    persisted.token = await request.post<any, string>('/login', {
+      username: loginForm.username,
+      password: CryptoJS.SHA256(loginForm.password).toString(CryptoJS.enc.Hex),
+    })
     await session.loadUser()
     isDialogOpen.value = false
   } catch {}
@@ -34,7 +38,12 @@ const signupForm = reactive({
 
 async function signup() {
   try {
-    persisted.token = await request.post<any, string>('/signup', signupForm)
+    persisted.token = await request.post<any, string>('/signup', {
+      username: signupForm.username,
+      password: CryptoJS.SHA256(signupForm.password).toString(CryptoJS.enc.Hex),
+      email: signupForm.email,
+      authcode: signupForm.authcode,
+    })
     await session.loadUser()
     isDialogOpen.value = false
   } catch {}
@@ -48,7 +57,11 @@ const retrieveForm = reactive({
 
 async function retrieve() {
   try {
-    persisted.token = await request.post<any, string>('/retrieve', retrieveForm)
+    persisted.token = await request.post<any, string>('/retrieve', {
+      email: retrieveForm.email,
+      authcode: retrieveForm.authcode,
+      password: CryptoJS.SHA256(retrieveForm.password).toString(CryptoJS.enc.Hex),
+    })
     await session.loadUser()
     isDialogOpen.value = false
   } catch {}

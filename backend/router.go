@@ -43,11 +43,13 @@ func GetRouter(db *gorm.DB, config *Config) *gin.Engine {
 		},
 	}
 
-	RegisterPatentHandler(r, &bc)
-	RegisterReportHandler(r, &bc)
+	RegisterPatentHandler(r, &bc, config)
+	RegisterReportHandler(r, &bc, config)
 	RegisterKeywordHandler(r, &bc)
 	RegisterUserHandler(r, &bc)
 	RegisterSuggestionHandler(r, &bc)
+
+	RegDeepSeekhandler(r, &bc, config)
 
 	return r
 }

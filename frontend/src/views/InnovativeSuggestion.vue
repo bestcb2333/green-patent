@@ -12,7 +12,7 @@ const params = useUrlSearchParams('history')
 const currentRow = ref<Suggestion|null>(null)
 const suggestions = ref<Suggestion[]>([])
 const page = ref(1)
-const pageSize = ref(10)
+const pageSize = ref(100)
 const total = ref(0)
 watch(([page, pageSize, params]), ([page, pageSize, params]) => {
   try {
